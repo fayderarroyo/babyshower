@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Heart, Stars, Gift, Settings, Plus, User, Check, X, BarChart2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import emailjs from '@emailjs/browser';
 import heroImg from './assets/bg_removed_hero.png';
 import storkImg from './assets/bg_removed_stork.png';
 import balloonsImg from './assets/bg_removed_balloons.png';
@@ -15,6 +16,11 @@ const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, su
 
 const categories = ['Muebles', 'Juguetes', 'Higiene', 'Ropa', 'Accesorios', 'Tecnología'];
 
+// EmailJS Config
+const EMAILJS_SERVICE_ID = 'service_bd3az77';
+const EMAILJS_TEMPLATE_ID = 'template_h8ej9wz';
+const EMAILJS_PUBLIC_KEY = 'tDS7fOJ4BtNDwOPwX';
+
 function App() {
   const [gifts, setGifts] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -24,7 +30,7 @@ function App() {
   // Fetch gifts on load
   useEffect(() => {
     if (!supabase) {
-      console.warn("Supabase credentials missing. App running in offline/demo mode.");
+      console.warn("Supabase credentials missing.");
       setLoading(false);
       return;
     }
@@ -38,7 +44,6 @@ function App() {
 
     fetchGifts();
 
-    // Real-time subscription
     const subscription = supabase
       .channel('gifts_changes')
       .on('postgres_changes', { event: '*', table: 'gifts' }, (payload) => {
@@ -57,15 +62,35 @@ function App() {
     };
   }, []);
 
-  const handleReserve = async (id) => {
-    const name = prompt("Por favor, ingresa tu nombre para reservar este regalo:");
+  const handleReserve = async (id, giftName) => {
+    const name = prompt("Gabriel y Camilo agradecen tu regalo, por favor confirma el nombre para reservar este regalo:");
+    
     if (name && supabase) {
       const { error } = await supabase
         .from('gifts')
         .update({ reservedBy: name })
         .eq('id', id);
       
-      if (error) alert("Error al reservar: " + error.message);
+      if (!error) {
+        // Enviar notificación por EmailJS
+        const templateParams = {
+          from_name: name,
+          gift_name: giftName,
+        };
+
+        emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          templateParams,
+          EMAILJS_PUBLIC_KEY
+        ).then((response) => {
+          console.log('Notificación enviada!', response.status, response.text);
+        }, (err) => {
+          console.error('Error enviando notificación:', err);
+        });
+      } else {
+        alert("Error al reservar: " + error.message);
+      }
     }
   };
 
@@ -302,7 +327,7 @@ function App() {
                         </div>
                       ) : (
                         <div className="action-orbs">
-                          <button className="orb-button small" onClick={() => handleReserve(gift.id)}>Reservar</button>
+                          <button className="orb-button small" onClick={() => handleReserve(gift.id, gift.name)}>Reservar</button>
                         </div>
                       )}
                     </div>

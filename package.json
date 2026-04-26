@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@supabase/supabase-js": "^2.104.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.11.0",
