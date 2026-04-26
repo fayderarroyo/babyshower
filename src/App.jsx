@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Heart, Stars, Gift, Settings, Plus, User, Check, X, BarChart2, Camera, Upload, Trash2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import emailjs from '@emailjs/browser';
+import { Analytics } from '@vercel/analytics/react';
 import heroImg from './assets/bg_removed_hero.png';
 import storkImg from './assets/bg_removed_stork.png';
 import balloonsImg from './assets/bg_removed_balloons.png';
@@ -234,6 +235,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <Analytics />
       {!supabase && (
         <div className="demo-warning">
           ⚠️ Modo Demo: Configura las variables de Supabase en Vercel para activar la persistencia real.
