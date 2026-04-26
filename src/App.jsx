@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Heart, Stars, Gift, Settings, Plus, User, Check, X, BarChart2 } from 'lucide-react';
+import { ShoppingCart, Heart, Stars, Gift, Settings, Plus, User, Check, X, BarChart2, Camera, Upload, Trash2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import emailjs from '@emailjs/browser';
 import heroImg from './assets/bg_removed_hero.png';
@@ -27,6 +27,8 @@ function App() {
   const [newGift, setNewGift] = useState({ name: '', category: 'Muebles' });
   const [loading, setLoading] = useState(true);
   const [expandedCategory, setExpandedCategory] = useState(null);
+  const [photos, setPhotos] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const extraBalloons = useMemo(() => Array.from({ length: 9 }).map((_, i) => ({
     id: i,
@@ -63,12 +65,23 @@ function App() {
       const { data, error } = await supabase.from('gifts').select('*').order('created_at', { ascending: true });
       if (error) console.error("Error fetching gifts:", error);
       else setGifts(data || []);
+    };
+
+    const fetchPhotos = async () => {
+      const { data, error } = await supabase.from('photos').select('*').order('created_at', { ascending: false });
+      if (error) console.error("Error fetching photos:", error);
+      else setPhotos(data || []);
+    };
+
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchGifts(), fetchPhotos()]);
       setLoading(false);
     };
 
-    fetchGifts();
+    loadData();
 
-    const subscription = supabase
+    const giftsSubscription = supabase
       .channel('gifts_changes')
       .on('postgres_changes', { event: '*', table: 'gifts' }, (payload) => {
         if (payload.eventType === 'INSERT') {
@@ -81,8 +94,20 @@ function App() {
       })
       .subscribe();
 
+    const photosSubscription = supabase
+      .channel('photos_changes')
+      .on('postgres_changes', { event: '*', table: 'photos' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setPhotos(prev => [payload.new, ...prev]);
+        } else if (payload.eventType === 'DELETE') {
+          setPhotos(prev => prev.filter(p => p.id !== payload.old.id));
+        }
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(giftsSubscription);
+      supabase.removeChannel(photosSubscription);
     };
   }, []);
 
@@ -134,6 +159,51 @@ function App() {
     if (supabase) {
       const { error } = await supabase.from('gifts').delete().eq('id', id);
       if (error) alert("Error al eliminar: " + error.message);
+    }
+  };
+
+  const handleUploadPhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !supabase) return;
+
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('ultrasounds')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('ultrasounds')
+        .getPublicUrl(filePath);
+
+      const { error: dbError } = await supabase
+        .from('photos')
+        .insert([{ url: publicUrl }]);
+
+      if (dbError) throw dbError;
+
+    } catch (error) {
+      alert("Error al subir foto: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = async (id, url) => {
+    if (!supabase) return;
+    try {
+      // Extraer el path del URL para borrar del storage también
+      const path = url.split('/public/ultrasounds/')[1];
+      await supabase.storage.from('ultrasounds').remove([path]);
+      await supabase.from('photos').delete().eq('id', id);
+    } catch (error) {
+      console.error("Error removing photo:", error);
     }
   };
 
@@ -274,6 +344,32 @@ function App() {
                     <button type="submit" className="orb-button small">Añadir</button>
                   </form>
                 </div>
+
+                <div className="admin-section photo-section">
+                  <h3><Camera size={18} /> Fotos de Ecografías</h3>
+                  <div className="upload-container">
+                    <label className="upload-btn">
+                      {uploading ? 'Subiendo...' : <><Upload size={18} /> Subir Foto</>}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleUploadPhoto} 
+                        disabled={uploading}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                  </div>
+                  <div className="admin-photo-grid">
+                    {photos.map(p => (
+                      <div key={p.id} className="admin-photo-item">
+                        <img src={p.url} alt="Eco" />
+                        <button onClick={() => removePhoto(p.id, p.url)} className="delete-photo-btn">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="admin-section list-section">
@@ -344,9 +440,9 @@ function App() {
                 <img src={astrolabeImg} className="astrolabe-frame" alt="Astrolabio" />
               </motion.div>
               <div className="drifting-images">
-                {[1, 2, 3, 4].map((i) => (
+                {(photos.length > 0 ? photos : [1, 2, 3, 4]).map((item, i) => (
                   <motion.div
-                    key={i}
+                    key={item.id || item}
                     className="ultrasound-card"
                     animate={{
                       y: [0, 400],
@@ -358,7 +454,11 @@ function App() {
                     transition={{ duration: 12 + i * 2, repeat: Infinity, delay: i * 4, ease: "easeInOut" }}
                   >
                     <div className="ultrasound-content">
-                      <div className="image-placeholder"><Stars className="star-icon" size={24} /></div>
+                      {item.url ? (
+                        <img src={item.url} className="eco-img" alt="Ecografía" />
+                      ) : (
+                        <div className="image-placeholder"><Stars className="star-icon" size={24} /></div>
+                      )}
                     </div>
                   </motion.div>
                 ))}
