@@ -233,7 +233,7 @@ function App() {
   if (loading) return <div className="loading">Cargando Dreamscape...</div>;
 
   return (
-    <div className="app-container horizontal-layout">
+    <div className="app-container">
       {!supabase && (
         <div className="demo-warning">
           ⚠️ Modo Demo: Configura las variables de Supabase en Vercel para activar la persistencia real.
@@ -409,7 +409,7 @@ function App() {
       </AnimatePresence>
 
       {!isAdmin && (
-        <div className="horizontal-sections">
+        <>
           <header className="hero-section">
             <motion.div 
               className="header-banner"
@@ -532,7 +532,7 @@ function App() {
               <p className="date-place">Salones Agora - Barrio Bosque, transversal 48 número 21-74</p>
             </motion.div>
           </footer>
-        </div>
+        </>
       )}
     </div>
   );

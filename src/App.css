@@ -12,9 +12,7 @@
 body, html {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Bloquear scroll vertical global */
-  height: 100vh;
-  width: 100vw;
+  overflow-x: hidden;
 }
 
 * {
@@ -30,37 +28,7 @@ body {
 .app-container {
   position: relative;
   overflow: hidden;
-}
-
-/* Horizontal Layout */
-.horizontal-layout {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-}
-
-.horizontal-sections {
-  display: flex;
-  flex-direction: row;
-  width: 100vw;
-  height: 100vh;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-}
-
-.horizontal-sections::-webkit-scrollbar {
-  display: none;
-}
-
-.horizontal-sections > section,
-.horizontal-sections > header,
-.horizontal-sections > footer {
-  flex: 0 0 100vw;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-snap-align: start;
+  min-height: 100vh;
 }
 
 /* Admin Toggle */
