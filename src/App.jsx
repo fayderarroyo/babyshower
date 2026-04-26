@@ -26,6 +26,30 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [newGift, setNewGift] = useState({ name: '', category: 'Muebles' });
   const [loading, setLoading] = useState(true);
+  const [expandedCategory, setExpandedCategory] = useState(null);
+
+  const extraBalloons = useMemo(() => Array.from({ length: 9 }).map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 90}vw`,
+    top: `${Math.random() * 90}vh`,
+    duration: 15 + Math.random() * 10,
+    delay: Math.random() * 5,
+    scale: 0.5 + Math.random() * 0.5
+  })), []);
+
+  const extraStorks = useMemo(() => Array.from({ length: 6 }).map((_, i) => {
+    const moveLeft = Math.random() > 0.5;
+    return {
+      id: i,
+      top: `${Math.random() * 80}vh`,
+      startX: moveLeft ? '120vw' : '-20vw',
+      endX: moveLeft ? '-20vw' : '120vw',
+      scaleX: moveLeft ? 1 : -1,
+      duration: 25 + Math.random() * 15,
+      delay: Math.random() * 10,
+      scale: 0.4 + Math.random() * 0.4
+    };
+  }), []);
 
   // Fetch gifts on load
   useEffect(() => {
@@ -139,24 +163,40 @@ function App() {
       <div className="dreamscape-bg" />
 
       {/* Admin Toggle */}
-      <button className="admin-toggle" onClick={() => setIsAdmin(!isAdmin)}>
+      <button className="admin-toggle" onClick={() => {
+        if (!isAdmin) {
+          const pwd = prompt("Ingrese contraseña de administrador:");
+          if (pwd === "rina2026") setIsAdmin(true);
+          else if (pwd !== null) alert("Contraseña incorrecta");
+        } else {
+          setIsAdmin(false);
+        }
+      }}>
         {isAdmin ? <X size={20} /> : <Settings size={20} />}
       </button>
 
       {/* Decorative Floating Elements */}
-      <motion.img 
-        src={balloonsImg} 
-        className="deco-balloons"
-        animate={{ y: [0, -40, 0], rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-      />
+      {extraBalloons.map(b => (
+        <motion.img 
+          key={`balloon-${b.id}`}
+          src={balloonsImg} 
+          className="deco-balloons"
+          style={{ left: b.left, top: b.top, scale: b.scale }}
+          animate={{ y: [0, -40, 0], rotate: [0, 5, -5, 0] }}
+          transition={{ duration: b.duration, repeat: Infinity, delay: b.delay, ease: "easeInOut" }}
+        />
+      ))}
 
-      <motion.img 
-        src={storkImg} 
-        className="deco-stork"
-        animate={{ x: [-200, 200, -200], y: [0, -30, 0] }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-      />
+      {extraStorks.map(s => (
+        <motion.img 
+          key={`stork-${s.id}`}
+          src={storkImg} 
+          className="deco-stork"
+          style={{ top: s.top, scaleX: s.scaleX, scaleY: s.scale }}
+          animate={{ x: [s.startX, s.endX] }}
+          transition={{ duration: s.duration, repeat: Infinity, delay: s.delay, ease: "linear" }}
+        />
+      ))}
 
       <AnimatePresence>
         {isAdmin && (
@@ -186,6 +226,31 @@ function App() {
                             animate={{ width: `${s.percent}%` }}
                           />
                         </div>
+                        {s.reserved > 0 && (
+                          <button 
+                            className="toggle-details-btn"
+                            onClick={() => setExpandedCategory(expandedCategory === s.category ? null : s.category)}
+                          >
+                            {expandedCategory === s.category ? 'Ocultar detalles' : 'Ver quién reservó'}
+                          </button>
+                        )}
+                        <AnimatePresence>
+                          {expandedCategory === s.category && (
+                            <motion.div 
+                              className="reserved-details"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                            >
+                              {gifts.filter(g => g.category === s.category && g.reservedBy).map(g => (
+                                <div key={g.id} className="reserved-detail-item">
+                                  <span>{g.name}</span>
+                                  <strong>{g.reservedBy}</strong>
+                                </div>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     ))}
                   </div>
