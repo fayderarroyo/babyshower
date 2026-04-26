@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Quicksand:wght@300;500;700&display=swap');
+
+:root {
+  --color-cream: #f9f9f9;
+  --color-beige: #e8ebec;
+  --color-terracotta: #45afc3;
+  --color-ocher: #b6d7de;
+  --color-accent: #44aec2;
+  --color-text: #4A4A4A;
+  
+  --font-main: 'Outfit', sans-serif;
+  --font-soft: 'Quicksand', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--color-cream);
+  color: var(--color-text);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Watercolor background effect */
+.dreamscape-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(245, 230, 211, 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 80% 10%, rgba(232, 168, 124, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(226, 125, 96, 0.1) 0%, transparent 60%);
+  background-color: var(--color-cream);
+}
+
+.dreamscape-bg::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.08;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-soft);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.orb-button {
+  background: var(--color-terracotta);
+  color: white;
+  padding: 12px 28px;
+  border-radius: 50px;
+  box-shadow: 0 10px 20px rgba(226, 125, 96, 0.3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.9rem;
+}
+
+.orb-button:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(226, 125, 96, 0.4);
+  background: var(--color-ocher);
+}
+
+/* Floating animation */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating-delayed {
+  animation: float 8s ease-in-out infinite;
+  animation-delay: 2s;
+}

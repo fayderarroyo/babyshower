@@ -1,0 +1,10 @@
+{
+  "gifts": [
+    { "id": "1", "name": "Cuna de Ensueño", "category": "Muebles", "reservedBy": null },
+    { "id": "2", "name": "Ropita de Algodón", "category": "Ropa", "reservedBy": "María Pérez" },
+    { "id": "3", "name": "Set de Baño", "category": "Higiene", "reservedBy": null },
+    { "id": "4", "name": "Peluche de Estrellas", "category": "Juguetes", "reservedBy": null },
+    { "id": "5", "name": "Monitor de Bebé", "category": "Tecnología", "reservedBy": null },
+    { "id": "6", "name": "Manta Tejida", "category": "Accesorios", "reservedBy": null }
+  ]
+}
