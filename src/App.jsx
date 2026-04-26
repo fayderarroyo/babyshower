@@ -29,6 +29,16 @@ function App() {
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+
+  const shuffleArray = (array) => {
+    const newArr = [...array];
+    for (let i = newArr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+    }
+    return newArr;
+  };
 
   const extraBalloons = useMemo(() => Array.from({ length: 9 }).map((_, i) => ({
     id: i,
@@ -64,7 +74,7 @@ function App() {
     const fetchGifts = async () => {
       const { data, error } = await supabase.from('gifts').select('*').order('created_at', { ascending: true });
       if (error) console.error("Error fetching gifts:", error);
-      else setGifts(data || []);
+      else setGifts(data ? shuffleArray(data) : []);
     };
 
     const fetchPhotos = async () => {
@@ -223,7 +233,7 @@ function App() {
   if (loading) return <div className="loading">Cargando Dreamscape...</div>;
 
   return (
-    <div className="app-container">
+    <div className="app-container horizontal-layout">
       {!supabase && (
         <div className="demo-warning">
           ⚠️ Modo Demo: Configura las variables de Supabase en Vercel para activar la persistencia real.
@@ -399,7 +409,7 @@ function App() {
       </AnimatePresence>
 
       {!isAdmin && (
-        <>
+        <div className="horizontal-sections">
           <header className="hero-section">
             <motion.div 
               className="header-banner"
@@ -468,8 +478,21 @@ function App() {
 
           <section className="registry-section">
             <motion.h2 className="section-title">LISTA DE REGALOS</motion.h2>
+            
+            <div className="category-tabs">
+              {categories.map(c => (
+                <button 
+                  key={c} 
+                  className={`tab-btn ${selectedCategory === c ? 'active' : ''}`}
+                  onClick={() => setSelectedCategory(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+
             <div className="constellation-grid">
-              {gifts.map((gift, idx) => (
+              {gifts.filter(g => g.category === selectedCategory).map((gift, idx) => (
                 <motion.div
                   key={gift.id}
                   className="gift-bubble"
@@ -509,7 +532,7 @@ function App() {
               <p className="date-place">Salones Agora - Barrio Bosque, transversal 48 número 21-74</p>
             </motion.div>
           </footer>
-        </>
+        </div>
       )}
     </div>
   );

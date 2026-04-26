@@ -1,3 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
+
+:root {
+  --color-terracotta: #E27D60;
+  --color-teal: #85CDCA;
+  --color-ocher: #E8A87C;
+  --color-cream: #FDFBF7;
+  --color-beige: #EAD2AC;
+  --color-text: #4A4A4A;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Bloquear scroll vertical global */
+  height: 100vh;
+  width: 100vw;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--color-cream);
+  color: var(--color-text);
+}
+
+.app-container {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Horizontal Layout */
+.horizontal-layout {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.horizontal-sections {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+}
+
+.horizontal-sections::-webkit-scrollbar {
+  display: none;
+}
+
+.horizontal-sections > section,
+.horizontal-sections > header,
+.horizontal-sections > footer {
+  flex: 0 0 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-align: start;
+}
+
 /* Admin Toggle */
 .admin-toggle {
   position: fixed;
@@ -278,7 +343,7 @@
 
 /* Decorative Assets */
 .deco-balloons {
-  position: absolute;
+  position: fixed;
   top: 5%;
   right: 5%;
   width: 180px;
@@ -288,7 +353,7 @@
 }
 
 .deco-stork {
-  position: absolute;
+  position: fixed;
   top: 15%;
   left: 0;
   width: 150px;
@@ -455,8 +520,33 @@
 
 /* Gift Registry */
 .registry-section {
-  padding: 100px 5%;
+  padding: 80px 5%;
   min-height: 100vh;
+}
+
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid var(--color-beige);
+  color: var(--color-ocher);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-btn.active, .tab-btn:hover {
+  background: var(--color-terracotta);
+  color: white;
+  border-color: var(--color-terracotta);
 }
 
 .constellation-grid {
