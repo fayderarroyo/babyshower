@@ -1,13 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Heart, Stars, Gift, Settings, Plus, User, Check, X, BarChart2 } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 import heroImg from './assets/bg_removed_hero.png';
 import storkImg from './assets/bg_removed_stork.png';
 import balloonsImg from './assets/bg_removed_balloons.png';
 import astrolabeImg from './assets/bg_removed_astrolabe.png';
 import './App.css';
 
-const API_URL = 'http://localhost:3001/gifts';
+// Supabase Configuration
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
 const categories = ['Muebles', 'Juguetes', 'Higiene', 'Ropa', 'Accesorios', 'Tecnología'];
 
 function App() {
@@ -18,54 +23,69 @@ function App() {
 
   // Fetch gifts on load
   useEffect(() => {
-    fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        setGifts(data);
-        setLoading(false);
+    if (!supabase) {
+      console.warn("Supabase credentials missing. App running in offline/demo mode.");
+      setLoading(false);
+      return;
+    }
+
+    const fetchGifts = async () => {
+      const { data, error } = await supabase.from('gifts').select('*').order('created_at', { ascending: true });
+      if (error) console.error("Error fetching gifts:", error);
+      else setGifts(data || []);
+      setLoading(false);
+    };
+
+    fetchGifts();
+
+    // Real-time subscription
+    const subscription = supabase
+      .channel('gifts_changes')
+      .on('postgres_changes', { event: '*', table: 'gifts' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setGifts(prev => [...prev, payload.new]);
+        } else if (payload.eventType === 'UPDATE') {
+          setGifts(prev => prev.map(g => g.id === payload.new.id ? payload.new : g));
+        } else if (payload.eventType === 'DELETE') {
+          setGifts(prev => prev.filter(g => g.id !== payload.old.id));
+        }
       })
-      .catch(err => {
-        console.error("Error fetching gifts:", err);
-        setLoading(false);
-      });
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
 
-  const handleReserve = (id) => {
+  const handleReserve = async (id) => {
     const name = prompt("Por favor, ingresa tu nombre para reservar este regalo:");
-    if (name) {
-      fetch(`${API_URL}/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reservedBy: name })
-      })
-      .then(res => res.json())
-      .then(updatedGift => {
-        setGifts(gifts.map(g => g.id === id ? updatedGift : g));
-      });
+    if (name && supabase) {
+      const { error } = await supabase
+        .from('gifts')
+        .update({ reservedBy: name })
+        .eq('id', id);
+      
+      if (error) alert("Error al reservar: " + error.message);
     }
   };
 
-  const addGift = (e) => {
+  const addGift = async (e) => {
     e.preventDefault();
-    if (newGift.name) {
-      fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newGift, id: String(Date.now()), reservedBy: null })
-      })
-      .then(res => res.json())
-      .then(savedGift => {
-        setGifts([...gifts, savedGift]);
-        setNewGift({ name: '', category: 'Muebles' });
-      });
+    if (newGift.name && supabase) {
+      const { error } = await supabase
+        .from('gifts')
+        .insert([{ ...newGift, reservedBy: null }]);
+      
+      if (error) alert("Error al añadir: " + error.message);
+      else setNewGift({ name: '', category: 'Muebles' });
     }
   };
 
-  const removeGift = (id) => {
-    fetch(`${API_URL}/${id}`, { method: 'DELETE' })
-      .then(() => {
-        setGifts(gifts.filter(g => g.id !== id));
-      });
+  const removeGift = async (id) => {
+    if (supabase) {
+      const { error } = await supabase.from('gifts').delete().eq('id', id);
+      if (error) alert("Error al eliminar: " + error.message);
+    }
   };
 
   const stats = useMemo(() => {
@@ -85,6 +105,12 @@ function App() {
 
   return (
     <div className="app-container">
+      {!supabase && (
+        <div className="demo-warning">
+          ⚠️ Modo Demo: Configura las variables de Supabase en Vercel para activar la persistencia real.
+        </div>
+      )}
+      
       <div className="dreamscape-bg" />
 
       {/* Admin Toggle */}
@@ -119,7 +145,6 @@ function App() {
               <h2>Panel de Administración</h2>
               
               <div className="admin-grid">
-                {/* Stats Section */}
                 <div className="admin-section stats-section">
                   <h3><BarChart2 size={18} /> Avances por Categoría</h3>
                   <div className="stats-grid">
@@ -141,7 +166,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Add Gift Section */}
                 <div className="admin-section add-section">
                   <h3><Plus size={18} /> Agregar Regalo</h3>
                   <form onSubmit={addGift}>
@@ -162,7 +186,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Reservations List */}
               <div className="admin-section list-section">
                 <h3><User size={18} /> Control de Reservas</h3>
                 <div className="admin-list">
@@ -191,7 +214,6 @@ function App() {
 
       {!isAdmin && (
         <>
-          {/* Header */}
           <header className="hero-section">
             <motion.div 
               className="header-banner"
@@ -221,7 +243,6 @@ function App() {
             </div>
           </header>
 
-          {/* Ultrasound Section */}
           <section className="ultrasound-section">
             <motion.h2 className="section-title">LA PRIMERA MIRADA</motion.h2>
             <div className="astrolabe-wrapper">
@@ -255,7 +276,6 @@ function App() {
             </div>
           </section>
 
-          {/* Gift Registry */}
           <section className="registry-section">
             <motion.h2 className="section-title">LISTA DE REGALOS</motion.h2>
             <div className="constellation-grid">
@@ -292,7 +312,6 @@ function App() {
             </div>
           </section>
 
-          {/* Footer */}
           <footer className="footer-section">
             <motion.div className="footer-content">
               <p>Esperando con ansias la llegada de <strong>Ian Gabriel</strong></p>
