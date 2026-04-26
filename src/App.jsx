@@ -17,7 +17,7 @@ const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, su
 const categories = ['Muebles', 'Juguetes', 'Higiene', 'Ropa', 'Accesorios', 'Tecnología'];
 
 // EmailJS Config
-const EMAILJS_SERVICE_ID = 'service_bd3az77';
+const EMAILJS_SERVICE_ID = 'service_kxjwro8';
 const EMAILJS_TEMPLATE_ID = 'template_h8ej9wz';
 const EMAILJS_PUBLIC_KEY = 'tDS7fOJ4BtNDwOPwX';
 
